@@ -1,0 +1,89 @@
+﻿@model IEnumerable<Book>
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>My Books</h1>
+
+<table>
+    <thead>
+        <tr>
+            <th>Cover</th>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Rating</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var book in Model)
+        {
+            <tr>
+                <td class="col-2"><img class="img-fluid img-thumbnail" src="@book.imgUrl" /></td>
+                <td class="col-3">@book.title</td>
+                <td class="col-3">@book.author</td>
+                <td class="col-2">
+                    @{int i=0;}
+                    @while(i<@book.rating)
+                    {
+                        <i class="bi bi-star-fill" onclick="updateBook('@book.ISBN',@i)"></i>
+                        i++;
+                    }
+                    @while(i<5)
+                    {
+                        <i class="bi bi-star" onclick="updateBook('@book.ISBN',@i)"></i>
+                        i++;
+                    }                    
+                </td>
+                <td class="col-2"><i class="bi bi-bookmark-x-fill" onclick="deleteBook('@book.ISBN')"></i></td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts{
+    <script>
+        function updateBook(ISBN, rating)
+        {
+            const book=
+            {
+                ISBN:ISBN,
+                rating:rating+1
+            };
+
+            $.ajax({
+                url: "/Book/Update",
+                method: 'POST',
+                dataType: 'text',
+                success: (res) => {
+                    location.reload();
+                    //to do - add feedback
+                },
+                data: book,
+                error:(xhr,status,err)=>{
+                    alert(status);
+                }
+            });
+        }
+        function deleteBook(ISBN) {
+            const book =
+            {
+                ISBN: ISBN
+            };
+
+            $.ajax({
+                url: "/Book/Delete",
+                method: 'POST',
+                dataType: 'text',
+                success: (res) => {
+                    location.reload();
+                    //to do - add feedback
+                },
+                data: book,
+                error: (xhr, status, err) => {
+                    alert(status);
+                }
+            });
+        }
+
+    </script>
+}
