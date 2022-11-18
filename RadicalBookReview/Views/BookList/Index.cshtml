@@ -3,8 +3,9 @@
     ViewData["Title"] = "Index";
 }
 
-<h1>New York Times Best Seller Lists</h1>
-
+<h1>New York Times Best Seller Lists</h1><br />
+<label for="search">Search terms - for Author begin with the word author, or enter ISBN or title.</label><br />
+<input type="text" id="search" /><button class="btn btn-outline-primary" onclick="searchBook();"><i class="bi bi-search"></i></button><br />
 <div class="container text-center">
     <div class="row">
         <div class="col-4 d-grid gap-2">
@@ -38,12 +39,11 @@
     <script>
         function loadList(listName, displayName) 
         {
+            //TODO Change to use GetBooks action so api key stays serverside
             $("#listName").text(displayName);
             $("#bookListTable").empty();
-            console.log("https://api.nytimes.com/svc/books/v3/lists/current/" + listName + ".json?api-key=ZnKshfRonaC0A3biKUAi3cYhYI0XdZDY");
             $.ajax({ url: "https://api.nytimes.com/svc/books/v3/lists/current/" + listName + ".json?api-key=ZnKshfRonaC0A3biKUAi3cYhYI0XdZDY" }).done((data) => {
                 data.results.books.forEach((book) => {
-                    let form = document.createElement('form');
 
                     let coverCell = document.createElement('td');
                     coverCell.setAttribute("class", "col-2");
@@ -123,11 +123,107 @@
                 method: 'POST',
                 dataType: 'json',
                 success: (res) => {
-                    console.log(res);
+                    if(res.statusCode==200)
+                    {
+                        alert(res.value);
+                    }
+                    else
+                    {
+                        alert("That book has already been added to your favourites");
+                        console.log(res);
+                    }
                     //to do - add feedback
                 },
                 data: book
             });
+        }
+
+        function searchBook() {
+            const term =
+            {
+                term:$("#search").val()
+            };
+
+            $.ajax({
+                url: "/BookList/Search",
+                method: 'POST',
+                dataType: 'json',
+                success: (res) => {
+                    if(res.length>0)
+                    {
+                        showBooks(res);
+                    }
+                    else
+                    {
+                        alert("No books found");
+                    }
+                    //to do - add feedback
+                },
+                data: term
+            });
+        }
+
+        function showBooks(books) 
+        {
+
+            $("#bookListTable").empty();
+            books.forEach(book => {
+
+            let coverCell = document.createElement('td');
+            coverCell.setAttribute("class", "col-2");
+
+            let titleCell = document.createElement('td');
+            titleCell.setAttribute("class", "col-3");
+            titleCell.innerText = book.book_title;
+
+            let authorCell = document.createElement('td');
+            authorCell.setAttribute("class", "col-3");
+            authorCell.innerText = book.book_author;
+
+            let ratingCell = document.createElement('td');
+            ratingCell.setAttribute("class", "col-4");
+
+            const space=' ';
+            for (let i = 0; i < 5; i++) {
+                let star = document.createElement('i');
+                star.setAttribute('class', 'bi bi-star');
+                star.setAttribute("onClick", "submitBook('" +
+                    book.isbn13[0] + "','" +
+                    book.book_author + "','" +
+                    book.book_title + "','" +
+                    space + "','" +
+                    space + "','" +
+                    space + "','" +
+                    space + "'," +
+                    (i + 1) + ");");
+
+                ratingCell.append(star);
+            }
+            let noRating = document.createElement("a");
+                noRating.setAttribute("onClick", "submitBook('" +
+                    book.isbn13[0] + "','" +
+                    book.book_author + "','" +
+                    book.book_title + "','" +
+                    space + "','" +
+                    space + "','" +
+                    space + "','" +
+                    space + "'," +
+                    0 + ");");
+
+            noRating.innerText = "Add to favourites without rating";
+            ratingCell.append(document.createElement("br"), noRating);
+
+            let row = document.createElement('tr');
+            row.append(coverCell, titleCell, authorCell, ratingCell);
+            $("#bookListTable").append(row);
+        });
+        $(".bi-star").on('mouseover', (e) => {
+            e.target.setAttribute('class', 'bi bi-star-fill');
+        });
+        $(".bi-star").on('mouseout', (e) => {
+            e.target.setAttribute('class', 'bi bi-star');
+        });
+
         }
     </script>
 }

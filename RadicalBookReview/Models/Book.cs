@@ -9,11 +9,11 @@ namespace RadicalBookReview.Models
         [Required]
         public string author { get; set; }
         [Required]
-        public string title { get; set; }
-        public string publisher { get; set; }
-        public string description { get; set; }
-        public string price { get; set; }
-        public string imgUrl { get; set; }
+        public string? title { get; set; }
+        public string? publisher { get; set; }
+        public string? description { get; set; }
+        public string? price { get; set; }
+        public string? imgUrl { get; set; }
         public int rating { get; set; }
         public Book(string ISBN, string author, string title,   string publisher="",string description="", string imgUrl="",string price="0", int rating=0)
         {

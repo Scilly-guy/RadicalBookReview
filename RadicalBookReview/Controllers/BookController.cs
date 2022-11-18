@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using RadicalBookReview.Data;
 using RadicalBookReview.Models;
@@ -26,7 +27,23 @@ namespace RadicalBookReview.Controllers
         {
             Book book = new(ISBN,author,title,publisher,description,imgUrl,price,rating);
             _db.Books.Add(book);
-            _db.SaveChanges();
+            try
+            {
+                _db.SaveChanges();
+            }
+            catch (DbUpdateException ex)
+            {
+                if(ex.InnerException != null)
+                {
+                    return new JsonResult(ex.InnerException.GetType().ToString());
+                }
+                return new JsonResult(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return new JsonResult(ex.Message);
+            }
+            
             return new JsonResult(Ok(book.title+" added to favourites."));
         }
         [HttpPost]

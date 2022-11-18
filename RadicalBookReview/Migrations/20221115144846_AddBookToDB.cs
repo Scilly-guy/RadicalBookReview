@@ -15,10 +15,10 @@ namespace RadicalBookReview.Migrations
                     ISBN = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     author = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     title = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    publisher = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    description = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    price = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    imgUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    publisher = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    price = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    imgUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     rating = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
