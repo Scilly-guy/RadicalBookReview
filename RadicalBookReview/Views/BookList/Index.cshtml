@@ -4,17 +4,24 @@
 }
 
 <h1>New York Times Best Seller Lists</h1><br />
-<label for="search">Search terms - for Author begin with the word author, or enter ISBN or title.</label><br />
-<input type="text" id="search" /><button class="btn btn-outline-primary" onclick="searchBook();"><i class="bi bi-search"></i></button><br />
 <div class="container text-center">
     <div class="row">
-        <div class="col-4 d-grid gap-2">
+        <div class="col-3 d-grid gap-2">
+            <div class="input-group">
+                <div>
+                    <label class="small" for="search">Search terms - for Author begin with the word author, or enter ISBN or title.</label>
+                    <div class="row">
+                        <div class="col-2 col-sm-10"><input class="form-control" type="search" id="search" placeholder="Author Terry Pratchett" /></div>
+                        <div class="col-2 col-sm-2"><button class="btn btn-primary" onclick="searchBook();"><i class="bi bi-search"></i></button></div>
+                    </div>
+                </div>
+            </div>
             @foreach (BookList list in Model)
             {
                 <button type="button" class="btn btn-primary" onclick="loadList('@list.list_name_encoded','@list.display_name');">@list.display_name</button>
             }
         </div>
-        <div class="col-8" >
+        <div class="col-9" >
             <h2 id="listName"></h2>
             <form>
                 <table class="table table-striped">
@@ -26,7 +33,7 @@
                             <th>Click to rate</th>
                         </tr>
                     </thead>
-                    <tbody id ="bookListTable">
+                    <tbody id="bookListTable" class="table-hover">
 
                     </tbody>
                 </table>
@@ -39,11 +46,11 @@
     <script>
         function loadList(listName, displayName) 
         {
-            //TODO Change to use GetBooks action so api key stays serverside
             $("#listName").text(displayName);
             $("#bookListTable").empty();
-            $.ajax({ url: "https://api.nytimes.com/svc/books/v3/lists/current/" + listName + ".json?api-key=ZnKshfRonaC0A3biKUAi3cYhYI0XdZDY" }).done((data) => {
-                data.results.books.forEach((book) => {
+            $.ajax({ url: "BookList/GetBooks",method:'GET', data:{list:listName }}).done((data) => {
+                data.forEach((book) => {
+                    book.title.replace(`'`,`\'`);
 
                     let coverCell = document.createElement('td');
                     coverCell.setAttribute("class", "col-2");
@@ -65,16 +72,15 @@
                     for (let i = 0; i < 5; i++) {
                         let star = document.createElement('i');
                         star.setAttribute('class', 'bi bi-star');
-                        star.setAttribute("onClick", "submitBook('" + 
-                            book.primary_isbn13 + "','" + 
-                            book.author + "','" + 
-                            book.title + "','" + 
-                            book.publisher + "','" + 
-                            book.description + "','" + 
-                            book.price + "','" + 
-                            book.book_image + "'," + 
-                            (i + 1) + ");");
-
+                        star.setAttribute("onClick", "submitBook('" +
+                            book.primary_isbn13 + "','" +
+                            book.author + "','" +
+                            book.title + "','" +
+                            book.publisher + "','" +
+                            book.description + "','" +
+                            book.price + "','" +
+                            book.book_image +
+                            "',"+(i+1)+");");
                         ratingCell.append(star);
                     }
                     let noRating = document.createElement("a");
@@ -92,15 +98,30 @@
                     ratingCell.append(document.createElement("br"), noRating);
 
                     let row = document.createElement('tr');
+                    row.setAttribute("onclick", "$(this).next().slideToggle(0);");
+                    row.style.cursor="pointer";
                     row.append(coverCell, titleCell, authorCell, ratingCell);
                     $("#bookListTable").append(row);
+
+                    let descriptionRow=document.createElement('tr');
+                    descriptionRow.setAttribute("class","description");
+                    let descriptionCell=document.createElement('td');
+                    descriptionCell.innerText=book.description;
+                    descriptionCell.setAttribute("colspan","4");
+                    descriptionRow.append(descriptionCell);
+                    $("#bookListTable").append(descriptionRow);
                 });
                 $(".bi-star").on('mouseover', (e) => {
                     e.target.setAttribute('class', 'bi bi-star-fill');
+                    $(e.target).prevAll().removeClass("bi-star");
+                    $(e.target).prevAll().addClass("bi-star-fill");
                 });
                 $(".bi-star").on('mouseout', (e) => {
                     e.target.setAttribute('class', 'bi bi-star');
+                    $(e.target).prevAll().removeClass("bi-star-fill");
+                    $(e.target).prevAll().addClass("bi-star");
                 });
+                $(".description").slideUp(0);
             });
         }
 
@@ -120,7 +141,7 @@
             
             $.ajax({
                 url: "/Book/AddToFavourites",
-                method: 'POST',
+                method: 'GET',
                 dataType: 'json',
                 success: (res) => {
                     if(res.statusCode==200)
@@ -146,7 +167,7 @@
 
             $.ajax({
                 url: "/BookList/Search",
-                method: 'POST',
+                method: 'GET',
                 dataType: 'json',
                 success: (res) => {
                     if(res.length>0)
@@ -182,6 +203,8 @@
 
             let ratingCell = document.createElement('td');
             ratingCell.setAttribute("class", "col-4");
+
+            
 
             const space=' ';
             for (let i = 0; i < 5; i++) {
