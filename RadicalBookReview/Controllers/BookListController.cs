@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using Newtonsoft.Json;
 using RadicalBookReview.Models;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 namespace RadicalBookReview.Controllers
 {
@@ -23,37 +24,76 @@ namespace RadicalBookReview.Controllers
             using HttpClient client = new();
             try
             {
-                client.BaseAddress = new Uri(_nytBookApi+"lists/names.json");
+                client.BaseAddress = new Uri(_nytBookApi + "lists/names.json");
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             }
             catch (Exception ex)
             {
-                return new JsonResult(ex.Message);
+                return StatusCode(503, ex.Message);
             }
 
-            HttpResponseMessage response = await client.GetAsync('?'+_nytKey);
+            HttpResponseMessage response = await client.GetAsync('?' + _nytKey);
             try
             {
                 response.EnsureSuccessStatusCode();
             }
             catch (Exception ex)
             {
-                return new JsonResult(ex.Message);
+                return StatusCode(502, "Could not connect to New York Times Book API");
             }
 
-            var responseBody=await response.Content.ReadAsStringAsync();
-            if(responseBody is null)
+            var responseBody = await response.Content.ReadAsStringAsync();
+            if (responseBody is null)
             {
-                return new JsonResult("Could not read response from NYT");
+                return StatusCode(502, "Could not read response from NYT");
             }
+
             nytResponse wholeResponse = JsonConvert.DeserializeObject<nytResponse>(responseBody);
 
             return View(wholeResponse.results);
+        }
+
+        //[AcceptVerbs("POST", "GET")]
+        [HttpGet]
+        public async Task<JsonResult> GetLists()
+        {
+            using HttpClient client = new();
+            try
+            {
+                client.BaseAddress = new Uri(_nytBookApi + "lists/names.json");
+                client.DefaultRequestHeaders.Accept.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            }
+            catch (Exception ex)
+            {
+                return new JsonResult(StatusCode(503,ex.Message));
+            }
+
+            HttpResponseMessage response = await client.GetAsync('?' + _nytKey);
+            try
+            {
+                response.EnsureSuccessStatusCode();
+            }
+            catch (HttpRequestException ex)
+            {
+                return new JsonResult(StatusCode(502, "Could not connect to New York Times Book API"));
+            }
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+            if (responseBody is null)
+            {
+                return new JsonResult(StatusCode(502,"Could not read response from NYT"));
+            }
+
+            nytResponse wholeResponse = JsonConvert.DeserializeObject<nytResponse>(responseBody);
+
+            return new JsonResult(Ok(wholeResponse.results));
 
         }
-        [HttpPost]
-        public async Task<IActionResult> GetBooks(string list)
+
+        [HttpGet]
+        public async Task<JsonResult> GetBooks(string list)
         {
             //TO DO:sanitise list
 
@@ -66,7 +106,7 @@ namespace RadicalBookReview.Controllers
             }
             catch (Exception ex)
             {
-                return new JsonResult(ex.Message);
+                return new JsonResult(StatusCode(406, "List not found"));
             }
 
             HttpResponseMessage response = await client.GetAsync('?'+_nytKey);
@@ -76,32 +116,39 @@ namespace RadicalBookReview.Controllers
             }
             catch (Exception ex)
             {
-                return new JsonResult(ex.Message);
+                return new JsonResult(StatusCode(400,ex.Message));
             }
 
             var responseBody = await response.Content.ReadAsStringAsync();
             if(responseBody is null)
             {
-                return new JsonResult("Could not read response from NYT");
+                return new JsonResult(StatusCode(502,"Could not read response from NYT"));
             }
             nytBookList wholeResponse = JsonConvert.DeserializeObject<nytBookList>(responseBody);
 
             return new JsonResult(wholeResponse.results.books);
 
         }
-        [HttpPost]
+        [HttpGet]
         public async Task<IActionResult> Search(string term)
         {
             //TO DO:sanitise term
             string searchType="?title=";
-            if(Regex.Match(term, @"^(97(8|9))?\d{9}(\d|X)$").Success)
+            try
             {
-                searchType = "?isbn=";
+                if(Regex.Match(term, @"^(97(8|9))?\d{9}(\d|X)$").Success)
+                {
+                    searchType = "?isbn=";
+                }
+                else if (Regex.Match(term, @"^author[\s:=]\w+", RegexOptions.IgnoreCase).Success) 
+                {
+                    searchType = "?author=";
+                    term = term.Substring(7).Replace(' ', '+');            
+                }
             }
-            else if (Regex.Match(term, @"^author[\s:=]\w+", RegexOptions.IgnoreCase).Success) 
+            catch (Exception ex)
             {
-                searchType = "?author=";
-                term = term.Substring(7).Replace(' ', '+');            
+                return new JsonResult(StatusCode(400, "Poorly Formed Search Term"));
             }
 
             using HttpClient client = new();            
@@ -113,23 +160,24 @@ namespace RadicalBookReview.Controllers
             }
             catch (Exception ex)
             {
-                return new JsonResult(ex.Message);
+                return new JsonResult(StatusCode(503, ex.Message));
             }
 
             HttpResponseMessage response = await client.GetAsync(searchType + term + '&'+_nytKey);
+
             try
             {
                 response.EnsureSuccessStatusCode();
             }
             catch (Exception ex)
             {
-                return new JsonResult(ex.Message);
+                return new JsonResult(StatusCode(400,ex.Message));
             }
 
             var responseBody = await response.Content.ReadAsStringAsync();
             if(responseBody is null)
             {
-                return new JsonResult("Could not read response from NYT");
+                return new JsonResult(StatusCode(502,"Could not read response from NYT"));
             }
             BookSearch wholeResponse = JsonConvert.DeserializeObject<BookSearch>(responseBody);
 
@@ -174,7 +222,7 @@ namespace RadicalBookReview.Controllers
             public string url { get; set; }
         }
 
-        public class Book
+        public class FullBook
         {
             public int rank { get; set; }
             public int rank_last_week { get; set; }
@@ -216,7 +264,7 @@ namespace RadicalBookReview.Controllers
             public string display_name { get; set; }
             public int normal_list_ends_at { get; set; }
             public string updated { get; set; }
-            public IList<Book> books { get; set; }
+            public IList<FullBook> books { get; set; }
             public IList<object> corrections { get; set; }
         }
 

@@ -18,7 +18,12 @@
         @foreach (var book in Model)
         {
             <tr>
-                <td class="col-2"><img class="img-fluid img-thumbnail" src="@book.imgUrl" /></td>
+                <td class="col-2">
+                    @if (!String.IsNullOrEmpty(book.imgUrl))
+                    {
+                        <img class="img-fluid img-thumbnail" src="@book.imgUrl" />
+                    } 
+                </td>
                 <td class="col-3">@book.title</td>
                 <td class="col-3">@book.author</td>
                 <td class="col-2">
@@ -32,7 +37,8 @@
                     {
                         <i class="bi bi-star" onclick="updateBook('@book.ISBN',@i)"></i>
                         i++;
-                    }                    
+                    } 
+                    <input type="hidden" value="@book.rating" name="rating"/>
                 </td>
                 <td class="col-2"><i class="bi bi-bookmark-x-fill" onclick="deleteBook('@book.ISBN')"></i></td>
             </tr>
@@ -42,6 +48,30 @@
 
 @section Scripts{
     <script>
+        $(document).ready(()=>{
+
+            $(".bi-star").on('mouseover', (e) => {
+                e.target.setAttribute('class', 'bi bi-star-fill');
+                $(e.target).prevAll().removeClass("bi-star");
+                $(e.target).prevAll().addClass("bi-star-fill");
+                $(e.target).nextAll().removeClass("bi-star-fill");
+                $(e.target).nextAll().addClass("bi-star");
+            });
+            $(".bi-star").on('mouseout', (e) => {
+                reset(e);
+            });
+            $(".bi-star-fill").on('mouseover', (e) => {
+                e.target.setAttribute('class', 'bi bi-star-fill');
+                $(e.target).prevAll().removeClass("bi-star");
+                $(e.target).prevAll().addClass("bi-star-fill");
+                $(e.target).nextAll().removeClass("bi-star-fill");
+                $(e.target).nextAll().addClass("bi-star");
+            });
+            $(".bi-star-fill").on('mouseout', (e) => {
+                reset(e);
+            });
+        });
+
         function updateBook(ISBN, rating)
         {
             const book=
@@ -52,7 +82,7 @@
 
             $.ajax({
                 url: "/Book/Update",
-                method: 'POST',
+                method: 'GET',
                 dataType: 'text',
                 success: (res) => {
                     location.reload();
@@ -72,7 +102,7 @@
 
             $.ajax({
                 url: "/Book/Delete",
-                method: 'POST',
+                method: 'GET',
                 dataType: 'text',
                 success: (res) => {
                     location.reload();
@@ -81,6 +111,23 @@
                 data: book,
                 error: (xhr, status, err) => {
                     alert(status);
+                }
+            });
+        }
+
+
+        function reset(e)
+        {
+            let rating=$.map($(e.target).nextAll("input"),(e)=>{return e;});
+            let stars=$.map($(rating[0]).siblings(),(sib)=>{return sib;});
+            stars.forEach((star,i)=>{
+                $(star).removeClass("bi-star bi-star-fill");
+                if(i<=rating[0].value-1)
+                {
+                    star.className="bi bi-star-fill";
+                }
+                else {
+                    star.className="bi bi-star";
                 }
             });
         }
