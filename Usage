@@ -1,4 +1,4 @@
-Usage of the Radical Book Review API:
+**Usage of the Radical Book Review API:
 
 To get a list of best selling books:
 1. Send a GET request to /BookList/GetLists This will return a Json object containing an array of New York Times Best Seller Lists.
