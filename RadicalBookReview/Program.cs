@@ -1,14 +1,10 @@
 using Microsoft.EntityFrameworkCore;
-using RadicalBookReview.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllersWithViews();
-builder.Services.AddDbContext<RadicalDbContext>(options => options.UseSqlServer(
-    builder.Configuration.GetConnectionString("DefaultConnection")
-    ));
 
 var app = builder.Build();
 
@@ -27,6 +23,6 @@ app.MapControllers();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Book}/{action=Index}/{id?}");
+    pattern: "{controller=Book}/{action=books}/{id?}");
 
 app.Run();

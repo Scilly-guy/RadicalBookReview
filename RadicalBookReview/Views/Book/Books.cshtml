@@ -1,0 +1,192 @@
+﻿@inject IConfiguration Configuration
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>My Books</h1>
+
+<table id="bookTable" class="table table-hover">
+    <thead>
+        <tr>
+            <th>Cover</th>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Rating</th>
+        </tr>
+    </thead>
+    <tbody id="bookTableBody">
+        
+    </tbody>
+</table>
+
+@section Scripts{
+    <script>
+        $(document).ready(()=>{
+            $.ajax({
+                url:"http://localhost:@Configuration["PortOfApi"]/GetBooks",
+                method:"GET",                
+                success:(result)=>{
+                    result.forEach((book,index)=>{
+                        let imgCell = document.createElement("td");
+                        imgCell.classList.add("col-2");
+
+                        if(book.imgUrl!=null)
+                        {
+                            let img = document.createElement("img");
+                            img.classList.add("img-fluid");
+                            img.classList.add("img-thumbnail");
+                            img.src=book.imgUrl;
+                            imgCell.append(img);
+                        }
+                        let titleCell = document.createElement('td');
+                        titleCell.setAttribute("class", "col-3");
+                        titleCell.innerText = book.title;
+
+                        let authorCell = document.createElement('td');
+                        authorCell.setAttribute("class", "col-3");
+                        authorCell.innerText = book.author;
+
+                        let ratingCell = document.createElement('td');
+                        ratingCell.setAttribute("class", "col-4");
+                        let i = 0;
+                        for (i; i < book.rating; i++) {
+                            let star = document.createElement('i');
+                            star.setAttribute('class', 'bi bi-star-fill');
+                            star.setAttribute("onclick",`updateBook(${book.isbn},${i});`);
+                            ratingCell.append(star);
+                        }
+                        for (i; i < 5; i++) {
+                            let star = document.createElement('i');
+                            star.setAttribute('class', 'bi bi-star');
+                            star.setAttribute("onclick", `updateBook(${book.isbn},${i});`);
+                            ratingCell.append(star);
+                        }
+                        let rating = document.createElement("input");
+                        rating.type="hidden";
+                        rating.value=book.rating;
+                        rating.name="rating";
+                        ratingCell.append(rating);
+
+                        let row = document.createElement('tr');
+                        if(index%2)
+                        {
+                            row.classList.add("table-secondary");
+                        }
+                        else
+                        {
+                            row.classList.add("table-default");
+                        }
+
+                        if(book.description!=null)
+                        {
+                            row.setAttribute("onclick", "$(this).next().slideToggle(0);");
+                            row.style.cursor = "pointer";
+                        }
+                        row.append(imgCell, titleCell, authorCell, ratingCell);
+                        $("#bookTableBody").append(row);
+
+                        let descriptionRow = document.createElement('tr');
+                        if (index % 2) {
+                            descriptionRow.classList.add("table-secondary");
+                        }
+                        else {
+                            descriptionRow.classList.add("table-default");
+                        }
+                        descriptionRow.classList.add("description");
+                        let descriptionCell = document.createElement('td');
+                        descriptionCell.innerText = book.description;
+                        descriptionCell.setAttribute("colspan", "4");
+                        descriptionRow.append(descriptionCell);
+                        $("#bookTableBody").append(descriptionRow);
+
+                        $(".bi-star").on('mouseover', (e) => {
+                            e.target.setAttribute('class', 'bi bi-star-fill');
+                            $(e.target).prevAll(".bi").removeClass("bi-star");
+                            $(e.target).prevAll(".bi").addClass("bi-star-fill");
+                            $(e.target).nextAll(".bi").removeClass("bi-star-fill");
+                            $(e.target).nextAll(".bi").addClass("bi-star");
+                        });
+                        $(".bi-star").on('mouseout', (e) => {
+                            reset(e);
+                        });
+                        $(".bi-star-fill").on('mouseover', (e) => {
+                            e.target.setAttribute('class', 'bi bi-star-fill');
+                            $(e.target).prevAll(".bi").removeClass("bi-star");
+                            $(e.target).prevAll(".bi").addClass("bi-star-fill");
+                            $(e.target).nextAll(".bi").removeClass("bi-star-fill");
+                            $(e.target).nextAll(".bi").addClass("bi-star");
+                        });
+                        $(".bi-star-fill").on('mouseout', (e) => {
+                            reset(e);
+                        });
+
+                        $(".description").slideUp(0);
+                    });
+                        
+                }
+            });
+        });
+
+        function updateBook(ISBN, rating)
+        {
+            alert(`${ISBN}: ${rating}`);
+            const book=
+            {
+                ISBN:ISBN,
+                rating:rating+1
+            };
+
+            $.ajax({
+                url: "http://localhost:@Configuration["PortOfApi"]/Update",
+                method: 'GET',
+                dataType: 'text',
+                success: (res) => {
+                    location.reload();
+                    //to do - add feedback
+                },
+                data: book,
+                error:(xhr,status,err)=>{
+                    alert(status);
+                }
+            });
+        }
+        function deleteBook(ISBN) {
+            const book =
+            {
+                ISBN: ISBN
+            };
+
+            $.ajax({
+                url: "http://localhost:@Configuration["PortOfApi"]/Delete",
+                method: 'GET',
+                dataType: 'text',
+                success: (res) => {
+                    location.reload();
+                    //to do - add feedback
+                },
+                data: book,
+                error: (xhr, status, err) => {
+                    alert(status);
+                }
+            });
+        }
+
+
+        function reset(e)
+        {
+            let rating=$.map($(e.target).nextAll("input"),(e)=>{return e;});
+            let stars=$.map($(rating[0]).siblings(),(sib)=>{return sib;});
+            stars.forEach((star,i)=>{
+                $(star).removeClass("bi-star bi-star-fill");
+                if(i<=rating[0].value-1)
+                {
+                    star.className="bi bi-star-fill";
+                }
+                else {
+                    star.className="bi bi-star";
+                }
+            });
+        }
+
+    </script>
+}

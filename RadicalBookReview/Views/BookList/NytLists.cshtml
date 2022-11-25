@@ -1,4 +1,4 @@
-﻿@model IEnumerable<BookList>
+﻿@inject IConfiguration Configuration
 @{
     ViewData["Title"] = "Index";
 }
@@ -6,7 +6,7 @@
 <h1>New York Times Best Seller Lists</h1><br />
 <div class="container text-center">
     <div class="row">
-        <div class="col-3 d-grid gap-2">
+        <div class="col-3 d-grid gap-2" id="pageNav">
             <div class="input-group">
                 <div>
                     <label class="small" for="search">Search terms - for Author begin with the word author, or enter ISBN or title.</label>
@@ -16,10 +16,6 @@
                     </div>
                 </div>
             </div>
-            @foreach (BookList list in Model)
-            {
-                <button type="button" class="btn btn-primary" onclick="loadList('@list.list_name_encoded','@list.display_name');">@list.display_name</button>
-            }
         </div>
         <div class="col-9" >
             <h2 id="listName"></h2>
@@ -44,13 +40,40 @@
 
 @section Scripts{
     <script>
+        $(document).ready(()=>{
+            $.ajax({
+                url:"http://localhost:@Configuration["PortOfApi"]/GetLists",
+                method:"GET",                
+                success:(result)=>{
+                    result.value.forEach(list =>{
+                        let button=document.createElement("button");
+                        button.classList.add("btn");
+                        button.classList.add("btn-primary");
+                        button.setAttribute("onclick",`loadList('${list.list_name_encoded}','${list.display_name}')`);
+                        button.innerText=list.display_name;
+                        $("#pageNav").append(button);
+                    });
+                }
+            });
+        });
+
         function loadList(listName, displayName) 
         {
             $("#listName").text(displayName);
             $("#bookListTable").empty();
-            $.ajax({ url: "BookList/GetBooks",method:'GET', data:{list:listName }}).done((data) => {
+            $.ajax({
+                url: "http://localhost:@Configuration["PortOfApi"]/GetBooksList", 
+                method: 'GET', 
+                error: (xhr, res, err) => {
+                    console.log(res+": "+err);
+                },
+                data:{list:listName }
+            }).done((data) => {
                 data.forEach((book) => {
-                    book.title.replace(`'`,`\'`);
+                    book.title = book.title.replace(/'/g, `\\'`);
+                    book.publisher = book.publisher.replace(`'`, `\\'`);
+                    book.description = book.description.replace(/'/g, `\\'`);
+                    book.price = book.price.replace(`'`, `\\'`);
 
                     let coverCell = document.createElement('td');
                     coverCell.setAttribute("class", "col-2");
@@ -140,20 +163,13 @@
             };
             
             $.ajax({
-                url: "/Book/AddToFavourites",
+                url: "http://localhost:@Configuration["PortOfApi"]/AddToFavourites",
                 method: 'GET',
                 dataType: 'json',
-                success: (res) => {
-                    if(res.statusCode==200)
-                    {
-                        alert(res.value);
-                    }
-                    else
-                    {
-                        alert("That book has already been added to your favourites");
-                        console.log(res);
-                    }
-                    //to do - add feedback
+                success: (res,status,xhr) => {
+                    console.log(xhr.status+": "+res);
+                    alert(res);
+                    //TO DO - add feedback
                 },
                 data: book
             });
@@ -166,7 +182,7 @@
             };
 
             $.ajax({
-                url: "/BookList/Search",
+                url: "http://localhost:@Configuration["PortOfApi"]/Search",
                 method: 'GET',
                 dataType: 'json',
                 success: (res) => {
@@ -186,67 +202,81 @@
 
         function showBooks(books) 
         {
-
+            console.log(books);
+            $("#listName").text("New York Times Book Reviews")
             $("#bookListTable").empty();
-            books.forEach(book => {
+            if(books == "No results found")
+            {
+                let cell = document.createElement("td");
+                cell.innerText = "No Book Reviews Found with specified term";
+                cell.setAttribute("colspan","4");
+                let row = document.createElement("tr");
+                row.append(cell);
+                $("#bookListTable").append(row);
+            }
+            else
+            {
+                books.forEach(book => {
 
-            let coverCell = document.createElement('td');
-            coverCell.setAttribute("class", "col-2");
+                    let coverCell = document.createElement('td');
+                    coverCell.setAttribute("class", "col-2");
 
-            let titleCell = document.createElement('td');
-            titleCell.setAttribute("class", "col-3");
-            titleCell.innerText = book.book_title;
+                    let titleCell = document.createElement('td');
+                    titleCell.setAttribute("class", "col-3");
+                    titleCell.innerText = book.book_title;
 
-            let authorCell = document.createElement('td');
-            authorCell.setAttribute("class", "col-3");
-            authorCell.innerText = book.book_author;
+                    let authorCell = document.createElement('td');
+                    authorCell.setAttribute("class", "col-3");
+                    authorCell.innerText = book.book_author;
 
-            let ratingCell = document.createElement('td');
-            ratingCell.setAttribute("class", "col-4");
+                    let ratingCell = document.createElement('td');
+                    ratingCell.setAttribute("class", "col-4");
 
             
 
-            const space=' ';
-            for (let i = 0; i < 5; i++) {
-                let star = document.createElement('i');
-                star.setAttribute('class', 'bi bi-star');
-                star.setAttribute("onClick", "submitBook('" +
-                    book.isbn13[0] + "','" +
-                    book.book_author + "','" +
-                    book.book_title + "','" +
-                    space + "','" +
-                    space + "','" +
-                    space + "','" +
-                    space + "'," +
-                    (i + 1) + ");");
+                    const space=' ';
+                    for (let i = 0; i < 5; i++) {
+                        let star = document.createElement('i');
+                        star.setAttribute('class', 'bi bi-star');
+                        star.setAttribute("onClick", "submitBook('" +
+                            book.isbn13[0] + "','" +
+                            book.book_author + "','" +
+                            book.book_title + "','" +
+                            space + "','" +
+                            space + "','" +
+                            space + "','" +
+                            space + "'," +
+                            (i + 1) + ");");
 
-                ratingCell.append(star);
+                        ratingCell.append(star);
+                    }
+                    let noRating = document.createElement("a");
+                    noRating.setAttribute("onClick", "submitBook('" +
+                        book.isbn13[0] + "','" +
+                        book.book_author + "','" +
+                        book.book_title + "','" +
+                        space + "','" +
+                        space + "','" +
+                        space + "','" +
+                        space + "'," +
+                        0 + ");");
+
+                    noRating.innerText = "Add to favourites without rating";
+                    ratingCell.append(document.createElement("br"), noRating);
+
+                    let row = document.createElement('tr');
+                    row.append(coverCell, titleCell, authorCell, ratingCell);
+                    $("#bookListTable").append(row);
+                });
+
+                $(".bi-star").on('mouseover', (e) => {
+                    e.target.setAttribute('class', 'bi bi-star-fill');
+                });
+
+                $(".bi-star").on('mouseout', (e) => {
+                    e.target.setAttribute('class', 'bi bi-star');
+                });
             }
-            let noRating = document.createElement("a");
-                noRating.setAttribute("onClick", "submitBook('" +
-                    book.isbn13[0] + "','" +
-                    book.book_author + "','" +
-                    book.book_title + "','" +
-                    space + "','" +
-                    space + "','" +
-                    space + "','" +
-                    space + "'," +
-                    0 + ");");
-
-            noRating.innerText = "Add to favourites without rating";
-            ratingCell.append(document.createElement("br"), noRating);
-
-            let row = document.createElement('tr');
-            row.append(coverCell, titleCell, authorCell, ratingCell);
-            $("#bookListTable").append(row);
-        });
-        $(".bi-star").on('mouseover', (e) => {
-            e.target.setAttribute('class', 'bi bi-star-fill');
-        });
-        $(".bi-star").on('mouseout', (e) => {
-            e.target.setAttribute('class', 'bi bi-star');
-        });
-
         }
     </script>
 }

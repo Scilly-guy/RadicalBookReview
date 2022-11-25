@@ -4,26 +4,27 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using RadicalBookReview.Data;
+using RadicalBookApi.Data;
 
 #nullable disable
 
-namespace RadicalBookReview.Migrations
+namespace RadicalBookApi.Migrations
 {
     [DbContext(typeof(RadicalDbContext))]
-    [Migration("20221115144846_AddBookToDB")]
-    partial class AddBookToDB
+    [Migration("20221125131412_CreateBookTable")]
+    partial class CreateBookTable
     {
+        /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "6.0.11")
+                .HasAnnotation("ProductVersion", "7.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder, 1L, 1);
+            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("RadicalBookReview.Models.Book", b =>
+            modelBuilder.Entity("RadicalBookApi.Models.Book", b =>
                 {
                     b.Property<string>("ISBN")
                         .HasColumnType("nvarchar(450)");
@@ -33,19 +34,15 @@ namespace RadicalBookReview.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("description")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("imgUrl")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("price")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("publisher")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("rating")

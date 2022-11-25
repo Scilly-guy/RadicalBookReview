@@ -2,10 +2,12 @@
 
 #nullable disable
 
-namespace RadicalBookReview.Migrations
+namespace RadicalBookApi.Migrations
 {
-    public partial class AddBookToDB : Migration
+    /// <inheritdoc />
+    public partial class CreateBookTable : Migration
     {
+        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
@@ -27,6 +29,7 @@ namespace RadicalBookReview.Migrations
                 });
         }
 
+        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
