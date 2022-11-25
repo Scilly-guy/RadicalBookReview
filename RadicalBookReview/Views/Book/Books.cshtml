@@ -47,7 +47,7 @@
                         authorCell.innerText = book.author;
 
                         let ratingCell = document.createElement('td');
-                        ratingCell.setAttribute("class", "col-4");
+                        ratingCell.setAttribute("class", "col-3");
                         let i = 0;
                         for (i; i < book.rating; i++) {
                             let star = document.createElement('i');
@@ -67,6 +67,13 @@
                         rating.name="rating";
                         ratingCell.append(rating);
 
+                        let deleteCell = document.createElement("td");
+                        deleteCell.setAttribute("class", "col-1");
+                        let deleteIcon = document.createElement("i");
+                        deleteIcon.setAttribute('class', 'bi bi-bookmark-x-fill');
+                        deleteIcon.setAttribute('onclick', `deleteBook('${book.isbn}')`);
+                        deleteCell.append(deleteIcon);
+
                         let row = document.createElement('tr');
                         if(index%2)
                         {
@@ -82,7 +89,7 @@
                             row.setAttribute("onclick", "$(this).next().slideToggle(0);");
                             row.style.cursor = "pointer";
                         }
-                        row.append(imgCell, titleCell, authorCell, ratingCell);
+                        row.append(imgCell, titleCell, authorCell, ratingCell, deleteCell);
                         $("#bookTableBody").append(row);
 
                         let descriptionRow = document.createElement('tr');
