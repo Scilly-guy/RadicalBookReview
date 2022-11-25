@@ -2,7 +2,7 @@ Usage of the Radical Book Review API:
 
 To get a list of best selling books:
 1. Send a GET request to /BookList/GetLists This will return a Json object containing an array of New York Times Best Seller Lists.
-2. Send a GET request to /BookList/GetBooks with the parameter 'list' set to the list_name_encoded of the best seller list you require, this will return a Json object containing an array of books.
+2. Send a GET request to /BookList/GetBooksList with the parameter 'list' set to the list_name_encoded of the best seller list you require, this will return a Json object containing an array of books.
 
 To add a book to the database:
 Send a Get request to /Book/AddToFavourites with the parameters 'ISBN', 'title' and 'author' defined, optionally include publisher, description, price, imgUrl and rating (0-5), a successful entry will respond with a Json object containing the value "{Title} added to favourites".
