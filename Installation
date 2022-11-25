@@ -1,0 +1,6 @@
+call Update-database from the Package Manager Console with the default project set to RadicalBookApi, this will perfomr the migration to create the Book table in the local MySQL Database.
+Change the port number on line 17 of RadicalBookApi.Program.cs to the applicationUrl from RadicalBookReview.Properties.launchSettings.json line 6
+Change the port number on line 10 "PortOfApi" to the port number on the applicationUrl line from RadicalBookApi.Properties.launchSettings.json line 7
+The above two lines prevent a CORS error when the front end requests data from the API.
+Set multiple start up projects in the solutions properties so that both projects start.
+Start Debugging The Projects
